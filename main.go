@@ -26,11 +26,13 @@ func main() {
 			msg, err := generator.Generate(0)
 			if err != nil {
 				log.Printf("failed to generate: %+v", err)
+				return
 			}
 
 			_, err = event.Message.Reply(context.Background(), s, msg)
 			if err != nil {
 				log.Printf("failed to send: %+v", err)
+				return
 			}
 		})
 }
