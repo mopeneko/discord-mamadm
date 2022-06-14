@@ -9,6 +9,7 @@ import (
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/snowflake/v5"
 	"github.com/greymd/mamadm/generator"
+	"golang.org/x/xerrors"
 )
 
 func main() {
@@ -46,24 +47,40 @@ func main() {
 
 	client.Gateway().
 		InteractionCreate(func(s disgord.Session, event *disgord.InteractionCreate) {
-			if event.Data.Name != "mama" {
-				return
-			}
-
-			msg, err := generator.Generate(0)
-			if err != nil {
-				log.Printf("failed to generate: %+v", err)
-				return
-			}
-
-			if err = s.SendInteractionResponse(context.Background(), event, &disgord.CreateInteractionResponse{
-				Type: disgord.InteractionCallbackChannelMessageWithSource,
-				Data: &disgord.CreateInteractionResponseData{
-					Content: msg,
-				},
-			}); err != nil {
-				log.Printf("failed to send response: %+v", err)
-				return
-			}
+			go interactionCreate(s, event)
 		})
+}
+
+func interactionCreate(s disgord.Session, event *disgord.InteractionCreate) {
+	if event.Data.Name == "mama" {
+		if err := mama(s, event); err != nil {
+			log.Printf("failed to execute command %s: %+v", event.Data.Name, err)
+		}
+	}
+}
+
+func mama(s disgord.Session, event *disgord.InteractionCreate) error {
+	msg, err := generator.Generate(0)
+	if err != nil {
+		if err = s.SendInteractionResponse(context.Background(), event, &disgord.CreateInteractionResponse{
+			Type: disgord.InteractionCallbackChannelMessageWithSource,
+			Data: &disgord.CreateInteractionResponseData{
+				Content: "failed to generate",
+			},
+		}); err != nil {
+			return xerrors.Errorf("failed to send response: %w", err)
+		}
+		return xerrors.Errorf("failed to generate: %w", err)
+	}
+
+	if err = s.SendInteractionResponse(context.Background(), event, &disgord.CreateInteractionResponse{
+		Type: disgord.InteractionCallbackChannelMessageWithSource,
+		Data: &disgord.CreateInteractionResponseData{
+			Content: msg,
+		},
+	}); err != nil {
+		return xerrors.Errorf("failed to send response: %w", err)
+	}
+
+	return nil
 }
