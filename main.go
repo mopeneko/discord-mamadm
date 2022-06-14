@@ -55,34 +55,27 @@ func main() {
 
 func interactionCreate(ctx context.Context, s disgord.Session, event *disgord.InteractionCreate) {
 	if event.Data.Name == "mama" {
-		if err := mama(ctx, s, event); err != nil {
-			log.Printf("failed to execute command %s: %+v", event.Data.Name, err)
+		msg, err := mama(ctx)
+		if err != nil {
+			log.Printf("failed to execute mama: %+v", err)
+			msg = "failed to execute"
+		}
+		if err = s.SendInteractionResponse(ctx, event, &disgord.CreateInteractionResponse{
+			Type: disgord.InteractionCallbackChannelMessageWithSource,
+			Data: &disgord.CreateInteractionResponseData{
+				Content: msg,
+			},
+		}); err != nil {
+			log.Printf("failed to send response: %+v", err)
 		}
 	}
 }
 
-func mama(ctx context.Context, s disgord.Session, event *disgord.InteractionCreate) error {
+func mama(ctx context.Context) (string, error) {
 	msg, err := generator.Generate(0)
 	if err != nil {
-		if err = s.SendInteractionResponse(ctx, event, &disgord.CreateInteractionResponse{
-			Type: disgord.InteractionCallbackChannelMessageWithSource,
-			Data: &disgord.CreateInteractionResponseData{
-				Content: "failed to generate",
-			},
-		}); err != nil {
-			return xerrors.Errorf("failed to send response: %w", err)
-		}
-		return xerrors.Errorf("failed to generate: %w", err)
+		return "", xerrors.Errorf("failed to generate: %w", err)
 	}
 
-	if err = s.SendInteractionResponse(ctx, event, &disgord.CreateInteractionResponse{
-		Type: disgord.InteractionCallbackChannelMessageWithSource,
-		Data: &disgord.CreateInteractionResponseData{
-			Content: msg,
-		},
-	}); err != nil {
-		return xerrors.Errorf("failed to send response: %w", err)
-	}
-
-	return nil
+	return msg, nil
 }
