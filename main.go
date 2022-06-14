@@ -54,20 +54,23 @@ func main() {
 }
 
 func interactionCreate(ctx context.Context, s disgord.Session, event *disgord.InteractionCreate) {
-	if event.Data.Name == "mama" {
-		msg, err := mama(ctx)
-		if err != nil {
-			log.Printf("failed to execute mama: %+v", err)
-			msg = "failed to execute"
-		}
-		if err = s.SendInteractionResponse(ctx, event, &disgord.CreateInteractionResponse{
-			Type: disgord.InteractionCallbackChannelMessageWithSource,
-			Data: &disgord.CreateInteractionResponseData{
-				Content: msg,
-			},
-		}); err != nil {
-			log.Printf("failed to send response: %+v", err)
-		}
+	if event.Data.Name != "mama" {
+		return
+	}
+
+	msg, err := mama(ctx)
+	if err != nil {
+		log.Printf("failed to execute mama: %+v", err)
+		msg = "failed to execute"
+	}
+
+	if err = s.SendInteractionResponse(ctx, event, &disgord.CreateInteractionResponse{
+		Type: disgord.InteractionCallbackChannelMessageWithSource,
+		Data: &disgord.CreateInteractionResponseData{
+			Content: msg,
+		},
+	}); err != nil {
+		log.Printf("failed to send response: %+v", err)
 	}
 }
 
